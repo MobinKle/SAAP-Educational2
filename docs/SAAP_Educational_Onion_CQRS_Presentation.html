@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>مستند ارائه پروژه SAAP Educational</title>
+  <style>
+    body {
+      direction: rtl;
+      font-family: "B Nazanin", "Tahoma", "Segoe UI", sans-serif;
+      font-size: 12pt;
+      line-height: 1.75;
+      color: #1f2933;
+    }
+    h1, h2, h3 {
+      font-family: "B Nazanin", "Tahoma", "Segoe UI", sans-serif;
+      color: #102a43;
+      page-break-after: avoid;
+    }
+    h1 {
+      text-align: center;
+      font-size: 22pt;
+      margin-top: 24pt;
+    }
+    h2 {
+      font-size: 17pt;
+      margin-top: 22pt;
+      border-bottom: 1px solid #bcccdc;
+      padding-bottom: 4pt;
+    }
+    h3 {
+      font-size: 14pt;
+      margin-top: 16pt;
+    }
+    p, li {
+      text-align: justify;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10pt 0;
+    }
+    th, td {
+      border: 1px solid #bcccdc;
+      padding: 6pt;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2f7;
+      font-weight: bold;
+    }
+    code, pre {
+      direction: ltr;
+      text-align: left;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9.5pt;
+    }
+    pre {
+      background: #f5f7fa;
+      border: 1px solid #d9e2ec;
+      padding: 8pt;
+      white-space: pre-wrap;
+    }
+    .note {
+      background: #f0f4f8;
+      border-right: 4px solid #486581;
+      padding: 8pt;
+      margin: 10pt 0;
+    }
+    .ltr {
+      direction: ltr;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>مستند ارائه پروژه SAAP Educational</h1>
+  <p class="note">موضوع: ساخت یک پروژه ASP.NET Core Web API با معماری Onion، الگوی CQRS، استفاده از MediatR، و ایجاد abstractionهای مشترک برای mediator و repositoryها.</p>
+
+  <h2>خلاصه کاری که انجام شد</h2>
+  <p>یک solution با نام <code>SAAP.Educational</code> ساخته شد و پروژه‌ها به پنج لایه تقسیم شدند: <code>Domain</code>، <code>Application</code>، <code>Shared</code>، <code>Infrastructure</code> و <code>Api</code>. هدف این ساختار این است که منطق اصلی برنامه از جزئیات فنی مثل دیتابیس، وب API و کتابخانه‌ها مستقل بماند.</p>
+  <p>برای اینکه مسیر استفاده از CQRS واضح باشد، یک نمونه ساده روی موجودیت Course ساخته شد. این نمونه شامل query برای گرفتن لیست دوره‌ها، query برای گرفتن یک دوره با شناسه، command برای ساخت دوره جدید، handlerها، DTO، controller و repositoryهای in-memory است.</p>
+
+  <h2>چرا معماری Onion؟</h2>
+  <p>معماری Onion برنامه را به لایه‌هایی تقسیم می‌کند که وابستگی‌ها از بیرون به داخل حرکت می‌کنند. مرکز معماری، Domain است؛ یعنی قوانین اصلی کسب‌وکار. لایه‌های بیرونی مثل Infrastructure و Api نباید منطق اصلی را آلوده کنند.</p>
+  <table>
+    <tr><th>مزیت</th><th>توضیح قابل ارائه</th></tr>
+    <tr><td>استقلال Domain</td><td>Domain به دیتابیس، وب API یا فریم‌ورک وابسته نیست؛ بنابراین تغییر تکنولوژی بیرونی باعث تغییر منطق اصلی نمی‌شود.</td></tr>
+    <tr><td>تست‌پذیری بهتر</td><td>چون منطق use caseها در Application و قوانین در Domain جدا هستند، می‌توان آن‌ها را بدون اجرای API یا دیتابیس تست کرد.</td></tr>
+    <tr><td>قابل توسعه بودن</td><td>بعدا می‌توان دیتابیس واقعی، message broker یا سرویس خارجی اضافه کرد بدون اینکه controllerها یا Domain بهم بریزند.</td></tr>
+    <tr><td>کنترل وابستگی‌ها</td><td>Api فقط نقش ورودی سیستم را دارد و Infrastructure فقط پیاده‌سازی جزئیات فنی را انجام می‌دهد.</td></tr>
+  </table>
+
+  <h2>چرا CQRS؟</h2>
+  <p>CQRS مخفف Command Query Responsibility Segregation است. یعنی عملیات خواندن و نوشتن را از هم جدا می‌کنیم. Query فقط داده می‌خواند و وضعیت سیستم را تغییر نمی‌دهد. Command وضعیت سیستم را تغییر می‌دهد؛ مثلا ساخت، ویرایش یا حذف.</p>
+  <table>
+    <tr><th>نوع عملیات</th><th>در پروژه</th><th>هدف</th></tr>
+    <tr><td>Query</td><td><code>ListCoursesQuery</code> و <code>GetCourseByIdQuery</code></td><td>دریافت داده بدون تغییر وضعیت سیستم</td></tr>
+    <tr><td>Command</td><td><code>CreateCourseCommand</code></td><td>ایجاد تغییر در سیستم و ذخیره نتیجه</td></tr>
+  </table>
+  <p>مزیت CQRS این است که کد خواندن و نوشتن با هم قاطی نمی‌شود. در پروژه‌های بزرگ، queryها معمولا نیاز به projection، paging، caching و optimization دارند؛ اما commandها بیشتر روی validation، business rule و transaction تمرکز می‌کنند.</p>
+
+  <h2>چرا MediatR؟</h2>
+  <p>MediatR کمک می‌کند controller مستقیما handlerها یا سرویس‌های مختلف را صدا نزند. Controller فقط یک request مثل command یا query می‌سازد و آن را به mediator می‌دهد. MediatR handler مناسب را پیدا و اجرا می‌کند.</p>
+  <p>در این پروژه یک wrapper مشترک با نام <code>IApplicationMediator</code> ساخته شد تا بقیه تیم مجبور نباشند همه جا مستقیم با <code>IMediator</code> کار کنند. این کار باعث می‌شود وابستگی به کتابخانه MediatR در سطح پروژه کنترل‌شده‌تر باشد.</p>
+
+  <h2>فولدر بندی پروژه</h2>
+  <table>
+    <tr><th>مسیر</th><th>نقش</th></tr>
+    <tr><td><code>src/SAAP.Educational.Domain</code></td><td>موجودیت‌ها و قوانین اصلی دامنه</td></tr>
+    <tr><td><code>src/SAAP.Educational.Application</code></td><td>use caseها، commandها، queryها، handlerها، DTOها و ثبت سرویس‌های application</td></tr>
+    <tr><td><code>src/SAAP.Educational.Shared</code></td><td>قراردادهای مشترک مثل CQRS، mediator abstraction و repository abstractionها</td></tr>
+    <tr><td><code>src/SAAP.Educational.Infrastructure</code></td><td>پیاده‌سازی repositoryها، دیتابیس یا سرویس‌های خارجی</td></tr>
+    <tr><td><code>src/SAAP.Educational.Api</code></td><td>Web API، controllerها، request contractها، Swagger و composition root</td></tr>
+  </table>
+
+  <h2>جهت وابستگی‌ها در Onion</h2>
+  <pre>Domain: بدون وابستگی به پروژه‌های دیگر
+Shared: abstractionهای قابل استفاده مشترک
+Application -> Domain + Shared
+Infrastructure -> Application + Domain + Shared
+Api -> Application + Infrastructure + Shared</pre>
+  <p>در زمان اجرا، Api همه سرویس‌ها را register می‌کند، ولی منطق اصلی در Api نوشته نمی‌شود. Api فقط request HTTP را می‌گیرد و آن را به Application می‌فرستد.</p>
+
+  <h2>جریان اجرای یک درخواست</h2>
+  <pre>Client
+  -> CoursesController
+  -> IApplicationMediator
+  -> MediatR
+  -> QueryHandler یا CommandHandler
+  -> Repository Interface
+  -> Infrastructure Repository Implementation
+  -> Response DTO
+  -> Client</pre>
+
+  <h2>توضیح فایل‌ها و کلاس‌ها</h2>
+
+  <h3>Program.cs در پروژه Api</h3>
+  <pre>using SAAP.Educational.Application;
+using SAAP.Educational.Infrastructure;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+app.Run();</pre>
+  <table>
+    <tr><th>خط</th><th>توضیح</th></tr>
+    <tr><td>1 تا 2</td><td>namespaceهای Application و Infrastructure وارد شده‌اند تا extension methodهای DI در Program قابل استفاده باشند.</td></tr>
+    <tr><td>4</td><td>builder ساخته می‌شود؛ این نقطه شروع تنظیمات Web API است.</td></tr>
+    <tr><td>6</td><td>controllerها به dependency injection اضافه می‌شوند.</td></tr>
+    <tr><td>7 تا 8</td><td>Swagger و endpoint explorer فعال می‌شوند تا API قابل مشاهده و تست باشد.</td></tr>
+    <tr><td>9</td><td>سرویس‌های لایه Application مثل MediatR و IApplicationMediator ثبت می‌شوند.</td></tr>
+    <tr><td>10</td><td>سرویس‌های Infrastructure مثل repository implementationها ثبت می‌شوند.</td></tr>
+    <tr><td>12</td><td>اپلیکیشن ساخته می‌شود.</td></tr>
+    <tr><td>14 تا 18</td><td>در محیط Development، Swagger UI فعال می‌شود.</td></tr>
+    <tr><td>20</td><td>درخواست‌های HTTP به HTTPS هدایت می‌شوند.</td></tr>
+    <tr><td>22</td><td>authorization middleware اضافه می‌شود.</td></tr>
+    <tr><td>24</td><td>controller routeها map می‌شوند.</td></tr>
+    <tr><td>26</td><td>برنامه اجرا می‌شود.</td></tr>
+  </table>
+
+  <h3>CoursesController.cs</h3>
+  <pre>public sealed class CoursesController : ControllerBase
+{
+    private readonly IApplicationMediator _mediator;
+
+    public CoursesController(IApplicationMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    [HttpGet]
+    public async Task&lt;ActionResult&lt;IReadOnlyList&lt;CourseDto&gt;&gt;&gt; List(CancellationToken cancellationToken)
+    {
+        var courses = await _mediator.QueryAsync(new ListCoursesQuery(), cancellationToken);
+        return Ok(courses);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task&lt;ActionResult&lt;CourseDto&gt;&gt; GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var course = await _mediator.QueryAsync(new GetCourseByIdQuery(id), cancellationToken);
+        return course is null ? NotFound() : Ok(course);
+    }
+
+    [HttpPost]
+    public async Task&lt;ActionResult&lt;CourseDto&gt;&gt; Create(CreateCourseRequest request, CancellationToken cancellationToken)
+    {
+        var course = await _mediator.SendAsync(
+            new CreateCourseCommand(request.Title, request.Description),
+            cancellationToken);
+
+        return CreatedAtAction(nameof(GetById), new { id = course.Id }, course);
+    }
+}</pre>
+  <table>
+    <tr><th>بخش</th><th>توضیح</th></tr>
+    <tr><td>usingها</td><td>controller به ASP.NET Core، contract ورودی، DTOها، command/queryها و mediator abstraction نیاز دارد.</td></tr>
+    <tr><td><code>[ApiController]</code></td><td>رفتارهای استاندارد API مثل model binding و validation response را فعال می‌کند.</td></tr>
+    <tr><td><code>[Route("api/[controller]")]</code></td><td>route پایه را تعیین می‌کند. برای این controller خروجی می‌شود <code>api/courses</code>.</td></tr>
+    <tr><td><code>sealed class</code></td><td>کلاس بسته شده تا از ارث‌بری غیرضروری جلوگیری شود.</td></tr>
+    <tr><td>field mediator</td><td>controller فقط به mediator وابسته است، نه به handler یا repository. این وابستگی را سبک و تمیز نگه می‌دارد.</td></tr>
+    <tr><td>constructor</td><td>mediator از DI گرفته و در field ذخیره می‌شود.</td></tr>
+    <tr><td>List</td><td>یک query می‌سازد و با <code>QueryAsync</code> لیست دوره‌ها را می‌گیرد.</td></tr>
+    <tr><td>GetById</td><td>شناسه از URL گرفته می‌شود، query اجرا می‌شود و اگر داده نبود <code>NotFound</code> برمی‌گردد.</td></tr>
+    <tr><td>Create</td><td>داده ورودی از body گرفته می‌شود، command ساخته می‌شود، handler آن را اجرا می‌کند و نتیجه با status 201 برمی‌گردد.</td></tr>
+  </table>
+
+  <h3>ICommand.cs</h3>
+  <pre>using MediatR;
+
+namespace SAAP.Educational.Shared.CQRS;
+
+public interface ICommand : IRequest;
+
+public interface ICommand&lt;out TResponse&gt; : IRequest&lt;TResponse&gt;;</pre>
+  <table>
+    <tr><th>خط</th><th>توضیح</th></tr>
+    <tr><td>1</td><td>MediatR وارد می‌شود چون commandها در نهایت requestهای MediatR هستند.</td></tr>
+    <tr><td>3</td><td>namespace مشترک CQRS مشخص می‌شود.</td></tr>
+    <tr><td>5</td><td>command بدون خروجی تعریف می‌شود؛ مثلا عملیاتی که فقط وضعیت را تغییر می‌دهد.</td></tr>
+    <tr><td>7</td><td>command دارای خروجی تعریف می‌شود؛ مثلا ساخت Course و برگرداندن DTO ساخته‌شده.</td></tr>
+  </table>
+
+  <h3>ICommandHandler.cs</h3>
+  <pre>public interface ICommandHandler&lt;in TCommand&gt; : IRequestHandler&lt;TCommand&gt;
+    where TCommand : ICommand;
+
+public interface ICommandHandler&lt;in TCommand, TResponse&gt; : IRequestHandler&lt;TCommand, TResponse&gt;
+    where TCommand : ICommand&lt;TResponse&gt;;</pre>
+  <p>این فایل handlerهای مربوط به command را استاندارد می‌کند. به جای اینکه تیم مستقیما همه جا <code>IRequestHandler</code> بنویسد، از abstraction مخصوص پروژه استفاده می‌کند. constraintها تضمین می‌کنند handler فقط برای command معتبر نوشته شود.</p>
+
+  <h3>IQuery.cs و IQueryHandler.cs</h3>
+  <pre>public interface IQuery&lt;out TResponse&gt; : IRequest&lt;TResponse&gt;;
+
+public interface IQueryHandler&lt;in TQuery, TResponse&gt; : IRequestHandler&lt;TQuery, TResponse&gt;
+    where TQuery : IQuery&lt;TResponse&gt;;</pre>
+  <p>Query همیشه خروجی دارد، چون هدفش خواندن داده است. Handler آن نیز فقط query معتبر را می‌پذیرد. این جداسازی کمک می‌کند خواندن‌ها و نوشتن‌ها از سطح type system جدا شوند.</p>
+
+  <h3>IApplicationMediator.cs</h3>
+  <pre>public interface IApplicationMediator
+{
+    Task SendAsync(ICommand command, CancellationToken cancellationToken = default);
+
+    Task&lt;TResponse&gt; SendAsync&lt;TResponse&gt;(
+        ICommand&lt;TResponse&gt; command,
+        CancellationToken cancellationToken = default);
+
+    Task&lt;TResponse&gt; QueryAsync&lt;TResponse&gt;(
+        IQuery&lt;TResponse&gt; query,
+        CancellationToken cancellationToken = default);
+}</pre>
+  <table>
+    <tr><th>متد</th><th>توضیح</th></tr>
+    <tr><td><code>SendAsync(ICommand)</code></td><td>برای commandهایی که خروجی ندارند.</td></tr>
+    <tr><td><code>SendAsync&lt;TResponse&gt;</code></td><td>برای commandهایی که خروجی دارند، مثل ساخت Course.</td></tr>
+    <tr><td><code>QueryAsync&lt;TResponse&gt;</code></td><td>برای queryها. نام جداگانه باعث خوانایی بهتر کد controller می‌شود.</td></tr>
+  </table>
+
+  <h3>ICommandRepository.cs</h3>
+  <pre>public interface ICommandRepository&lt;TEntity, in TKey&gt;
+    where TEntity : class
+    where TKey : notnull
+{
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    void Update(TEntity entity);
+    void Remove(TEntity entity);
+    Task&lt;int&gt; SaveChangesAsync(CancellationToken cancellationToken = default);
+}</pre>
+  <p>این interface مخصوص عملیات نوشتن است. متدهای Add، Update، Remove و SaveChanges در سمت command استفاده می‌شوند. generic بودن آن باعث می‌شود برای entityهای مختلف مثل Course، Student یا Lesson قابل استفاده باشد.</p>
+
+  <h3>IQueryRepository.cs</h3>
+  <pre>public interface IQueryRepository&lt;TEntity, in TKey&gt;
+    where TEntity : class
+    where TKey : notnull
+{
+    Task&lt;TEntity?&gt; GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
+    Task&lt;IReadOnlyList&lt;TEntity&gt;&gt; ListAsync(CancellationToken cancellationToken = default);
+}</pre>
+  <p>این interface مخصوص خواندن است. Query side اجازه تغییر entity را نمی‌دهد و خروجی لیست را به صورت read-only برمی‌گرداند. این همان تفکیک CQRS در لایه persistence abstraction است.</p>
+
+  <h3>Entity.cs</h3>
+  <pre>public abstract class Entity&lt;TKey&gt;
+    where TKey : notnull
+{
+    protected Entity(TKey id)
+    {
+        Id = id;
+    }
+
+    public TKey Id { get; protected init; }
+}</pre>
+  <p>این کلاس پایه برای entityهای دامنه است. هر entity یک شناسه دارد. constructor محافظت‌شده است تا فقط کلاس‌های فرزند بتوانند آن را صدا بزنند. <code>protected init</code> یعنی شناسه از بیرون آزادانه قابل تغییر نیست.</p>
+
+  <h3>Course.cs</h3>
+  <pre>public sealed class Course : Entity&lt;Guid&gt;
+{
+    private Course(Guid id, string title, string description)
+        : base(id)
+    {
+        Title = title;
+        Description = description;
+    }
+
+    public string Title { get; private set; }
+    public string Description { get; private set; }
+
+    public static Course Create(string title, string description)
+    {
+        return new Course(Guid.NewGuid(), title, description);
+    }
+}</pre>
+  <p>Course نمونه entity دامنه است. constructor آن private است تا ساخت entity از مسیر کنترل‌شده انجام شود. متد static <code>Create</code> نقطه رسمی ساخت Course است و شناسه جدید تولید می‌کند. setterها private هستند تا تغییرات دامنه بعدا فقط از طریق متدهای رفتاری کنترل شوند.</p>
+
+  <h3>Application DependencyInjection.cs</h3>
+  <pre>public static IServiceCollection AddApplication(this IServiceCollection services)
+{
+    services.AddMediatR(configuration =>
+    {
+        configuration.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+    });
+
+    services.AddScoped&lt;IApplicationMediator, ApplicationMediator&gt;();
+
+    return services;
+}</pre>
+  <p>این extension method ثبت سرویس‌های لایه Application را یکجا انجام می‌دهد. MediatR کل assembly مربوط به Application را scan می‌کند و handlerها را پیدا می‌کند. سپس wrapper پروژه یعنی <code>IApplicationMediator</code> به پیاده‌سازی <code>ApplicationMediator</code> وصل می‌شود.</p>
+
+  <h3>ApplicationMediator.cs</h3>
+  <pre>internal sealed class ApplicationMediator : IApplicationMediator
+{
+    private readonly IMediator _mediator;
+
+    public ApplicationMediator(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    public Task SendAsync(ICommand command, CancellationToken cancellationToken = default)
+    {
+        return _mediator.Send(command, cancellationToken);
+    }
+
+    public Task&lt;TResponse&gt; SendAsync&lt;TResponse&gt;(ICommand&lt;TResponse&gt; command, CancellationToken cancellationToken = default)
+    {
+        return _mediator.Send(command, cancellationToken);
+    }
+
+    public Task&lt;TResponse&gt; QueryAsync&lt;TResponse&gt;(IQuery&lt;TResponse&gt; query, CancellationToken cancellationToken = default)
+    {
+        return _mediator.Send(query, cancellationToken);
+    }
+}</pre>
+  <p>این کلاس adapter بین abstraction خودمان و MediatR است. <code>internal</code> است چون بیرون از Application نباید مستقیم با آن کار کند. controller فقط interface مشترک را می‌شناسد.</p>
+
+  <h3>CourseDto.cs</h3>
+  <pre>public sealed record CourseDto(Guid Id, string Title, string Description);</pre>
+  <p>DTO خروجی API است. به جای برگرداندن مستقیم entity دامنه، داده مورد نیاز client را در یک record سبک و immutable می‌فرستیم.</p>
+
+  <h3>ListCoursesQuery.cs و Handler آن</h3>
+  <pre>public sealed record ListCoursesQuery : IQuery&lt;IReadOnlyList&lt;CourseDto&gt;&gt;;
+
+internal sealed class ListCoursesQueryHandler : IQueryHandler&lt;ListCoursesQuery, IReadOnlyList&lt;CourseDto&gt;&gt;
+{
+    private readonly IQueryRepository&lt;Course, Guid&gt; _courseRepository;
+
+    public async Task&lt;IReadOnlyList&lt;CourseDto&gt;&gt; Handle(ListCoursesQuery request, CancellationToken cancellationToken)
+    {
+        var courses = await _courseRepository.ListAsync(cancellationToken);
+
+        return courses
+            .Select(course => new CourseDto(course.Id, course.Title, course.Description))
+            .ToList();
+    }
+}</pre>
+  <p>Query فقط درخواست خواندن لیست است. Handler از <code>IQueryRepository</code> استفاده می‌کند، داده‌های Course را می‌خواند و آن‌ها را به CourseDto تبدیل می‌کند. این mapping باعث می‌شود entity داخلی مستقیم از API بیرون نرود.</p>
+
+  <h3>GetCourseByIdQuery.cs و Handler آن</h3>
+  <pre>public sealed record GetCourseByIdQuery(Guid CourseId) : IQuery&lt;CourseDto?&gt;;
+
+public async Task&lt;CourseDto?&gt; Handle(GetCourseByIdQuery request, CancellationToken cancellationToken)
+{
+    var course = await _courseRepository.GetByIdAsync(request.CourseId, cancellationToken);
+
+    return course is null
+        ? null
+        : new CourseDto(course.Id, course.Title, course.Description);
+}</pre>
+  <p>این query شناسه دوره را دریافت می‌کند. خروجی nullable است چون ممکن است دوره‌ای با آن شناسه وجود نداشته باشد. Handler در صورت نبود داده null برمی‌گرداند و controller آن را به 404 تبدیل می‌کند.</p>
+
+  <h3>CreateCourseCommand.cs و Handler آن</h3>
+  <pre>public sealed record CreateCourseCommand(string Title, string Description) : ICommand&lt;CourseDto&gt;;
+
+public async Task&lt;CourseDto&gt; Handle(CreateCourseCommand request, CancellationToken cancellationToken)
+{
+    var course = Course.Create(request.Title, request.Description);
+
+    await _courseRepository.AddAsync(course, cancellationToken);
+    await _courseRepository.SaveChangesAsync(cancellationToken);
+
+    return new CourseDto(course.Id, course.Title, course.Description);
+}</pre>
+  <p>این command قصد تغییر وضعیت سیستم را نشان می‌دهد: ساخت Course جدید. Handler از متد factory داخل Domain استفاده می‌کند، سپس از <code>ICommandRepository</code> برای ذخیره استفاده می‌کند. در پایان DTO ساخته‌شده برگردانده می‌شود.</p>
+
+  <h3>CreateCourseRequest.cs</h3>
+  <pre>public sealed record CreateCourseRequest(string Title, string Description);</pre>
+  <p>این contract مخصوص ورودی API است. جدا کردن request API از command باعث می‌شود مدل HTTP با مدل Application یکی نشود. اگر بعدا validation یا فیلدهای خاص API اضافه شود، Application کمتر تحت تاثیر قرار می‌گیرد.</p>
+
+  <h3>Infrastructure DependencyInjection.cs</h3>
+  <pre>public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+{
+    services.AddSingleton&lt;CourseStorage&gt;();
+    services.AddScoped&lt;IQueryRepository&lt;Course, Guid&gt;, InMemoryCourseQueryRepository&gt;();
+    services.AddScoped&lt;ICommandRepository&lt;Course, Guid&gt;, InMemoryCourseCommandRepository&gt;();
+
+    return services;
+}</pre>
+  <p>در اینجا قراردادهای shared به پیاده‌سازی‌های واقعی وصل می‌شوند. فعلا پیاده‌سازی in-memory است، ولی بعدا می‌توان همین registration را به EF Core، Dapper یا هر persistence دیگر تغییر داد.</p>
+
+  <h3>CourseStorage.cs</h3>
+  <pre>internal sealed class CourseStorage
+{
+    public CourseStorage()
+    {
+        Courses =
+        [
+            Course.Create("Onion Architecture", "Layered architecture sample for SAAP Educational."),
+            Course.Create("CQRS with MediatR", "Command and query separation with shared abstractions.")
+        ];
+    }
+
+    public List&lt;Course&gt; Courses { get; }
+}</pre>
+  <p>این کلاس فقط برای نمونه و تست اولیه است. به جای دیتابیس، یک لیست در حافظه نگه می‌دارد. دو Course اولیه هم ساخته شده تا endpoint لیست خروجی داشته باشد.</p>
+
+  <h3>InMemoryCourseQueryRepository.cs</h3>
+  <pre>public Task&lt;Course?&gt; GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+{
+    return Task.FromResult(_storage.Courses.FirstOrDefault(course => course.Id == id));
+}
+
+public Task&lt;IReadOnlyList&lt;Course&gt;&gt; ListAsync(CancellationToken cancellationToken = default)
+{
+    return Task.FromResult&lt;IReadOnlyList&lt;Course&gt;&gt;(_storage.Courses);
+}</pre>
+  <p>این repository فقط عملیات خواندن دارد. <code>GetByIdAsync</code> یک دوره را با شناسه پیدا می‌کند و <code>ListAsync</code> کل لیست را برمی‌گرداند. async بودن signature باعث می‌شود بعدا با دیتابیس واقعی بدون تغییر contract هماهنگ شود.</p>
+
+  <h3>InMemoryCourseCommandRepository.cs</h3>
+  <pre>public Task AddAsync(Course entity, CancellationToken cancellationToken = default)
+{
+    _storage.Courses.Add(entity);
+    return Task.CompletedTask;
+}
+
+public void Update(Course entity)
+{
+    var index = _storage.Courses.FindIndex(course => course.Id == entity.Id);
+    if (index >= 0)
+    {
+        _storage.Courses[index] = entity;
+    }
+}
+
+public void Remove(Course entity)
+{
+    _storage.Courses.RemoveAll(course => course.Id == entity.Id);
+}
+
+public Task&lt;int&gt; SaveChangesAsync(CancellationToken cancellationToken = default)
+{
+    return Task.FromResult(1);
+}</pre>
+  <p>این repository فقط عملیات نوشتن دارد. Add موجودیت را اضافه می‌کند، Update آیتم هم‌شناسه را جایگزین می‌کند، Remove آیتم را حذف می‌کند، و SaveChanges فعلا مقدار 1 برمی‌گرداند چون ذخیره‌سازی واقعی نداریم. در EF Core، همین متد می‌تواند به <code>DbContext.SaveChangesAsync</code> وصل شود.</p>
+
+  <h2>Endpointهای ساخته شده</h2>
+  <table>
+    <tr><th>Endpoint</th><th>نوع CQRS</th><th>توضیح</th></tr>
+    <tr><td><code>GET /api/courses</code></td><td>Query</td><td>لیست Courseها را برمی‌گرداند.</td></tr>
+    <tr><td><code>GET /api/courses/{id}</code></td><td>Query</td><td>یک Course را با شناسه می‌گیرد؛ اگر نبود 404 می‌دهد.</td></tr>
+    <tr><td><code>POST /api/courses</code></td><td>Command</td><td>Course جدید می‌سازد و 201 Created برمی‌گرداند.</td></tr>
+  </table>
+
+  <h2>نکات مهم برای ارائه</h2>
+  <ul>
+    <li>Controllerها نباید business logic داشته باشند؛ فقط request HTTP را به command/query تبدیل می‌کنند.</li>
+    <li>Application محل use caseهاست؛ هر use case با یک command یا query و handler مربوطه پیاده‌سازی می‌شود.</li>
+    <li>Domain مستقل‌ترین لایه است و نباید به Infrastructure یا Api وابسته شود.</li>
+    <li>Shared محل abstractionهای مشترک است؛ اما نباید تبدیل به محل ریختن همه چیز شود. فقط قراردادهای عمومی و قابل استفاده مشترک باید آنجا باشند.</li>
+    <li>Infrastructure جزئیات فنی را پیاده‌سازی می‌کند؛ امروز in-memory است، فردا می‌تواند SQL Server، MongoDB یا سرویس خارجی باشد.</li>
+    <li>MediatR coupling بین controller و handler را کم می‌کند و مسیر افزودن pipeline behavior مثل validation، logging و transaction را باز می‌گذارد.</li>
+  </ul>
+
+  <h2>چطور پروژه را اجرا کنیم؟</h2>
+  <p>به دلیل اینکه نام فولدر فعلی شامل <code>%20</code> است، MSBuild ممکن است مسیر را اشتباه decode کند. راه سریع build و run این است:</p>
+  <pre>subst S: "C:\Users\60179\source\repos\SAAP%20Educational"
+dotnet build S:\SAAP.Educational.sln
+dotnet run --project S:\src\SAAP.Educational.Api\SAAP.Educational.Api.csproj --urls http://localhost:5188</pre>
+  <p>بعد از اجرا، Swagger در این آدرس در دسترس است:</p>
+  <pre>http://localhost:5188/swagger</pre>
+</body>
+</html>
