@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SAAP.Educational.Modules.Courses.Application\SAAP.Educational.Modules.Courses.Application.csproj" />
+    <ProjectReference Include="..\SAAP.Educational.Modules.Courses.Contracts\SAAP.Educational.Modules.Courses.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\SAAP.Educational.Shared\SAAP.Educational.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

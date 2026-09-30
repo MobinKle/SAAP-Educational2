@@ -1,13 +1,19 @@
-using SAAP.Educational.Application;
-using SAAP.Educational.Infrastructure;
+using SAAP.Educational.Modules.Courses.Application;
+using SAAP.Educational.Modules.Courses.Infrastructure;
+using SAAP.Educational.Modules.Courses.Presentation.Controllers;
+using SAAP.Educational.Shared.Mediator;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddApplicationPart(typeof(CoursesController).Assembly);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddApplicationMediator();
+builder.Services.AddCoursesApplication();
+builder.Services.AddCoursesInfrastructure();
 
 var app = builder.Build();
 

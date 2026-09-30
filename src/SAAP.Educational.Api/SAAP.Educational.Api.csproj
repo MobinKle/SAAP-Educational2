@@ -12,8 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SAAP.Educational.Application\SAAP.Educational.Application.csproj" />
-    <ProjectReference Include="..\SAAP.Educational.Infrastructure\SAAP.Educational.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Courses\SAAP.Educational.Modules.Courses.Application\SAAP.Educational.Modules.Courses.Application.csproj" />
+    <ProjectReference Include="..\Modules\Courses\SAAP.Educational.Modules.Courses.Infrastructure\SAAP.Educational.Modules.Courses.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Courses\SAAP.Educational.Modules.Courses.Presentation\SAAP.Educational.Modules.Courses.Presentation.csproj" />
     <ProjectReference Include="..\SAAP.Educational.Shared\SAAP.Educational.Shared.csproj" />
   </ItemGroup>
 

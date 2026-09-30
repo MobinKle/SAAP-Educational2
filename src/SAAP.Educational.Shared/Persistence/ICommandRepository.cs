@@ -1,7 +1,9 @@
+using SAAP.Educational.Shared.Common;
+
 namespace SAAP.Educational.Shared.Persistence;
 
 public interface ICommandRepository<TEntity, in TKey>
-    where TEntity : class
+    where TEntity : AggregateRoot<TKey>
     where TKey : notnull
 {
     Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
